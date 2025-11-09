@@ -6,7 +6,7 @@ from contextlib import asynccontextmanager
 
 from api.routers import books, changes
 
-# Use lifespan context manager to replace deprecated on_event startup/shutdown
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # --- Startup logic ---
@@ -14,7 +14,7 @@ async def lifespan(app: FastAPI):
     redis_client = await redis.from_url("redis://localhost", encoding="utf8", decode_responses=True)
     await FastAPILimiter.init(redis_client)
 
-    yield  # --- Application runs here ---
+    yield
 
     # --- Shutdown logic ---
     await redis_client.close()
@@ -36,15 +36,15 @@ app = FastAPI(
     version="1.0.0",
     contact={
         "name": "Books Crawler Maintainer",
-        "url": "https://github.com/yourusername/books-crawler",
-        "email": "you@example.com",
+        "url": "https://github.com/BernardWambua/books_web_crawler",
+        "email": "benerio72@gmail.com",
     },
     license_info={
         "name": "MIT License",
         "url": "https://opensource.org/licenses/MIT",
     },
     docs_url="/docs",
-    lifespan=lifespan,  # Attach lifespan handler
+    lifespan=lifespan,
 )
 
 # --- Routers with rate limiting ---

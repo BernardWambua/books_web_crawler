@@ -5,7 +5,7 @@ from api.deps import db
 router = APIRouter(prefix="/changes", tags=["Changes"])
 
 @router.get(
-    "/changes",
+    "/",
     summary="View recent changes",
     description="Retrieve recent book updates such as price or availability changes.",
     tags=["Changes"],

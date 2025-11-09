@@ -7,7 +7,7 @@ from urllib.parse import urljoin
 from apscheduler.schedulers.blocking import BlockingScheduler
 from bs4 import BeautifulSoup
 
-from crawler.scraper import init_driver  # reuse driver init for discovery
+from crawler.scraper import init_driver 
 from crawler.parser import parse_book_page
 from crawler.storage import (
     get_book_by_source_url,
@@ -18,6 +18,7 @@ from scheduler.change_detector import detect_changes
 from utils.logger import get_logger
 from utils.reports import write_reports
 from utils.hash_utils import fingerprint_book
+from utils.email_alerts import EmailAlerter
 
 logger = get_logger()
 
@@ -41,8 +42,6 @@ def discover_new_books(driver):
             break  # No more pages
 
         for a in anchors:
-            # href = a.get("href")
-            # link = urljoin(driver.current_url, href)
             href = a.get("href")
             link = urljoin(page_url, href)
 
@@ -89,7 +88,7 @@ def discover_new_books(driver):
     return new_count
 
 
-def run_cycle():
+def run_cycle_old():
     """Perform one full crawl + change detection cycle."""
     logger.info("Starting discovery and change-detection cycle...")
 
@@ -108,6 +107,36 @@ def run_cycle():
     report_path = write_reports(changes)
     logger.info(f"Report generated at: {report_path}")
 
+def run_cycle():
+    """Perform one full crawl + change detection cycle."""
+    logger.info("Starting discovery and change-detection cycle...")
+    alerter = EmailAlerter()
+
+    driver = init_driver()
+    try:
+        new_count = discover_new_books(driver)
+        if new_count > 0:
+            alerter.send_alert(
+                f"[Books Crawler] {new_count} New Books Found",
+                [{"type": "discovery", "changes": {"new_books": new_count}}]
+            )
+        logger.info(f"Discovery complete — {new_count} new books added.")
+    finally:
+        driver.quit()
+
+    # Run change detection
+    changes = detect_changes(run_headless=True)
+    if changes:
+        alerter.send_alert(
+            f"[Books Crawler] {len(changes)} Changes Detected",
+            changes
+        )
+    logger.info(f"Change detection complete — {len(changes)} updates found.")
+
+    # Generate daily report
+    report_path = write_reports(changes)
+    logger.info(f"Report generated at: {report_path}")
+
 
 def main(run_once=False):
     """Run the scheduler loop (daily at 03:00) or immediately once."""
@@ -116,8 +145,8 @@ def main(run_once=False):
         return
 
     scheduler = BlockingScheduler()
-    scheduler.add_job(run_cycle, "cron", hour=3, minute=0)
-    logger.info("Scheduler started (daily at 03:00).")
+    scheduler.add_job(run_cycle, "cron", hour=22, minute=20)
+    logger.info("Scheduler started (daily at 22:20).")
 
     try:
         scheduler.start()

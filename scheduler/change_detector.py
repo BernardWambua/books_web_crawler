@@ -3,7 +3,7 @@ from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from urllib.parse import urljoin
-from datetime import datetime
+from datetime import datetime, timezone
 from utils.hash_utils import fingerprint_book
 from crawler.storage import (
     get_all_books,
@@ -54,7 +54,7 @@ def detect_changes(run_headless=True, alert_threshold_pct=5):
                 # new_book is Pydantic model; get dict
                 new_doc = new_book.model_dump()
                 new_doc["raw_html"] = html
-                new_doc["crawl_timestamp"] = datetime.utcnow()
+                new_doc["crawl_timestamp"] = datetime.now(timezone.utc)
 
                 # compute fingerprints
                 old_fp = old_doc.get("content_hash") or ""
@@ -76,7 +76,7 @@ def detect_changes(run_headless=True, alert_threshold_pct=5):
                     new_doc["content_hash"] = new_fp
                     new_doc["meta"] = old_doc.get("meta", {})
                     new_doc["meta"]["first_seen_at"] = old_doc.get("meta", {}).get("first_seen_at")
-                    new_doc["meta"]["last_seen_at"] = datetime.utcnow()
+                    new_doc["meta"]["last_seen_at"] = datetime.now(timezone.utc)
                     upsert_book_doc(new_doc)
                     changes_report.append(rec)
 
@@ -99,9 +99,9 @@ def detect_changes(run_headless=True, alert_threshold_pct=5):
                     # no change — update last_seen + crawl_timestamp
                     upsert_book_doc({
                         **old_doc,
-                        "crawl_timestamp": datetime.utcnow(),
+                        "crawl_timestamp": datetime.now(timezone.utc),
                         "content_hash": new_fp,
-                        "meta": {**old_doc.get("meta", {}), "last_seen_at": datetime.utcnow()}
+                        "meta": {**old_doc.get("meta", {}), "last_seen_at": datetime.now(timezone.utc)}
                     })
             except Exception as e:
                 logger.error(f"Error fetching {source_url}: {e}")

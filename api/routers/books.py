@@ -24,7 +24,7 @@ def list_books(
     min_price: Optional[float] = Query(None, description="Minimum book price"),
     max_price: Optional[float] = Query(None, description="Maximum book price"),
     rating: Optional[int] = Query(None, ge=1, le=5, description="Book rating (1–5)"),
-    sort_by: Optional[str] = Query(None, enum=["rating", "price_incl_tax", "num_reviews"]),
+    sort_by: Optional[str] = Query(None, enum=["rating", "price_including_tax", "num_reviews"]),
     page: int = Query(1, ge=1, description="Page number for pagination"),
     page_size: int = Query(10, le=100, description="Number of books per page"),
 ):
@@ -35,12 +35,11 @@ def list_books(
     if rating:
         query["rating"] = rating
     if min_price is not None or max_price is not None:
-        query["price_incl_tax"] = {}
+        query["price_including_tax"] = {}
         if min_price is not None:
-            query["price_incl_tax"]["$gte"] = min_price
+            query["price_including_tax"]["$gte"] = min_price
         if max_price is not None:
-            query["price_incl_tax"]["$lte"] = max_price
-
+            query["price_including_tax"]["$lte"] = max_price
     # MongoDB query
     cursor = db.books.find(query)
 

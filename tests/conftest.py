@@ -4,11 +4,13 @@ from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
 from fastapi_limiter import FastAPILimiter
+import importlib
 
+try:
+    from api.security import auth
+except Exception:
+    auth = importlib.import_module("api.security.auth")
 
-# ---------------------------
-#  Fixtures for parser tests
-# ---------------------------
 
 TEST_DATA_DIR = Path(__file__).parent / "data"
 TEST_DATA_DIR.mkdir(exist_ok=True)
@@ -87,17 +89,23 @@ def mock_fastapi_limiter(monkeypatch):
 
     yield
 
+def pytest_configure(config):
+    """Add no_auth marker"""
+    config.addinivalue_line(
+        "markers", "no_auth: mark test to skip API authentication mocking"
+    )
 
 @pytest.fixture(autouse=True)
-def mock_api_key(monkeypatch):
+def mock_api_key(monkeypatch, request):
     """
     Automatically bypass API key authentication during tests.
     This prevents 401 errors unless explicitly testing auth.
     """
-    from api import security
+    if request.node.get_closest_marker('no_auth'):
+        # Skip auth mocking for tests marked with no_auth
+        return
 
     def fake_get_api_key():
         return "test-key"
 
-    monkeypatch.setattr(security.auth, "get_api_key", fake_get_api_key)
-    yield
+    monkeypatch.setattr(auth, "get_api_key", fake_get_api_key)

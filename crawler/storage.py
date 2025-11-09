@@ -29,7 +29,7 @@ state_coll.create_index([("key", ASCENDING)], unique=True)
 def upsert_book_doc(book_data):
     """Insert or update a book document safely in MongoDB."""
 
-    # 🔒 Convert any non-serializable fields to JSON-safe dicts
+    # Convert any non-serializable fields to JSON-safe dicts
     try:
         safe_data = json_util.loads(json_util.dumps(book_data))
     except Exception as e:
