@@ -55,7 +55,6 @@ logs/
 
 # Local settings, secrets and env
 .env
-.env.* 
 secrets.json
 config.local.yaml
 

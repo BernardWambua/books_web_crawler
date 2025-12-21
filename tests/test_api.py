@@ -27,7 +27,7 @@ def test_list_books_authorized(monkeypatch):
     monkeypatch.setattr("api.routers.books.db.books.find", lambda *a, **k: mock_books)
     monkeypatch.setattr("api.routers.books.db.books.count_documents", lambda *a, **k: 1)
 
-    headers = {"X-API-Key": "My2025Secret"}
+    headers = {"X-API-Key": "your-secret-key-here"}
     resp = client.get("/books", headers=headers)
     assert resp.status_code == 200
     data = resp.json()
