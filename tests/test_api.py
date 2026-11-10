@@ -23,7 +23,17 @@ def test_list_books_authorized(monkeypatch):
     client = TestClient(app)
 
     # Mock DB functions
-    mock_books = [{"_id": "1", "name": "Mock Book", "price_including_tax": 20.0}]
+    class FakeCursor(list):
+        def sort(self, *a, **k):
+            return self
+
+        def skip(self, *a, **k):
+            return self
+
+        def limit(self, *a, **k):
+            return self
+
+    mock_books = FakeCursor([{"_id": "1", "name": "Mock Book", "price_including_tax": 20.0}])
     monkeypatch.setattr("api.routers.books.db.books.find", lambda *a, **k: mock_books)
     monkeypatch.setattr("api.routers.books.db.books.count_documents", lambda *a, **k: 1)
 
