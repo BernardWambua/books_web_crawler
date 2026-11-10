@@ -193,3 +193,16 @@ pytest tests/test_crawler.py -v
 - Rate limiting requires a Redis instance (defaults to localhost:6379)
 - Email alerts use Gmail SMTP (requires App Password if 2FA is enabled)
 - MongoDB indexes are created automatically on first run
+
+## Guarded Playwright Crawler
+
+`python -m crawler.browser_scraper` crawls with a browser that is read-only and locked to the site's host. See `crawler/guard.py`.
+
+- **GET only:** Playwright routing aborts every other method and records it.
+- **Allowlisted hosts only:** enforced in Chromium's host resolver, because Playwright does not call route handlers for redirect hops. A route-only allowlist lets a 302 leave the site, and `test_control_routing_alone_does_not_stop_redirects` demonstrates this.
+- **Offline tests:** `tests/test_guard_e2e.py` drives a real Chromium against a local range (`tests/range_site.py`) and asserts on the requests its servers actually received. Each trap also runs unguarded, as a control.
+
+```bash
+python -m playwright install chromium
+python -m pytest tests/test_guard_policy.py tests/test_guard_e2e.py tests/test_browser_scraper.py -v
+```
